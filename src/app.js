@@ -3,6 +3,7 @@ import cors from "cors"
 import { MongoClient } from "mongodb";
 import dotenv from "dotenv"
 import joi from "joi";
+import { request } from "http";
 
 dotenv.config()
 const server = express()
@@ -46,7 +47,8 @@ server.post("/login", async (request, response) => {
     try {
         const userFound = await db.collection("usuarios").findOne({email})
         if (userFound){
-            response.send({name:userFound.name});
+            console.log(userFound._id)
+            response.send({name:userFound.name,id:userFound._id});
         }
     } catch (error) {
         response.sendStatus(401)
@@ -68,16 +70,44 @@ server.post("/registro", async (request, response) =>{
     }
     try {
         const userExist = await db.collection("usuarios").findOne({email})
-        console.log(userExist,"cadastrado")
         if(userExist){
             return response.sendStatus(409)
         }
     await db.collection("usuarios").insertOne(newUserPost)
+
     } catch (error) {
         console.log(error)
         return response.sendStatus(400)
     }
 
 } )
+
+server.post("/transacoes", async (request,response) =>{
+    const transacao = request.body
+    try{
+        db.collection('transacoes').insertOne(transacao);
+        console.log(transacao)
+        response.sendStatus(201);
+
+    }catch(err){
+        response.send(err);
+    };
+}
+) 
+
+server.get("/transacoes", async (request,response) =>{ 
+    const  {id} = request.body
+    console.log(id,"id")
+    try{
+        const transacoes = await db.collection('transacoes').find({_id:id}).toArray();
+        console.log(transacoes,"transacoes")
+        response.send(transacoes);
+
+
+    }catch(err){
+        response.send(err);
+    };
+}
+) 
 
 server.listen(PORT, ()  => console.log("servidor rodou "))
